@@ -9,7 +9,7 @@ const src = path.resolve(root, "./src");
 const target = path.resolve(root, "./bin");
 
 shell.exec(
-    "g++ " + "-std=c++20 " +
+    "clang++ " + "-std=c++20 " +
     path.resolve(src, name + ".cpp") + " -o " +
     path.resolve(target, name)
 )

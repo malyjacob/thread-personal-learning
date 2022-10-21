@@ -4,53 +4,53 @@
 #include <concepts>
 
 template <class T>
-concept NoVoid = !std::is_void_v<T>;
+concept __NoVoid = !std::is_void_v<T>;
 
 template <class T>
-concept YesVoid = std::is_void_v<T>;
+concept __YesVoid = std::is_void_v<T>;
 
 template <class...>
-struct _NV;
+struct __NV;
 
-template <NoVoid T>
-struct _NV<T> : public std::true_type
+template <__NoVoid T>
+struct __NV<T> : public std::true_type
 {
 };
 
-template <YesVoid T>
-struct _NV<T> : public std::false_type
+template <__YesVoid T>
+struct __NV<T> : public std::false_type
 {
 };
 
 template <class T1, class T2>
-struct _NV<T1, T2>
+struct __NV<T1, T2>
 {
-    static constexpr bool value = std::__and_<_NV<T1>, _NV<T2>>::value;
+    static constexpr bool value = std::__and_<__NV<T1>, __NV<T2>>::value;
 };
 
 template <class T1, class T2, class... Args>
-struct _NV<T1, T2, Args...>
+struct __NV<T1, T2, Args...>
 {
-    static constexpr bool value = std::__and_<_NV<T1>, _NV<T2, Args...>>::value;
+    static constexpr bool value = std::__and_<__NV<T1>, __NV<T2, Args...>>::value;
 };
 
 template <class... Args>
-concept AllNoVoid = _NV<Args...>::value;
+concept __AllNoVoid = __NV<Args...>::value;
 
 template <class T, class R, class... Args>
-concept PCallable = requires(T t, Args... args)
+concept __P_Callable = requires(T t, Args... args)
 {
     {
         t(args...)
         } -> std::same_as<R>;
 }
-&&AllNoVoid<Args...>;
+&&__AllNoVoid<Args...>;
 
 template <class T, class R, class... Args>
-concept PFunction = PCallable<T, R, Args...> && std::is_function_v<T>;
+concept __P_Function = __P_Callable<T, R, Args...> && std::is_function_v<T>;
 
 template <class T, class R, class... Args>
-concept PFunctor = PCallable<T, R, Args...> && std::is_class_v<T>;
+concept __P_Functor = __P_Callable<T, R, Args...> && std::is_class_v<T>;
 
 template <class...>
 class __Base_Pkg;
@@ -65,7 +65,7 @@ protected:
     Fn _fn;
 
     __Base_Pkg() = default;
-    template <NoVoid First, NoVoid... Rest>
+    template <__NoVoid First, __NoVoid... Rest>
     __Base_Pkg(First f, Rest... res) : _fn(f, res...) {}
 };
 
@@ -83,73 +83,73 @@ protected:
 template <class...>
 class Calculator;
 
-template <class F, NoVoid R, NoVoid... Args>
-requires PFunctor<F, R, Args...>
+template <class F, __NoVoid R, __NoVoid... Args>
+requires __P_Functor<F, R, Args...>
 class Calculator<F, R, Args...> : public __Base_Pkg<F>
 {
 public:
-    typedef __Base_Pkg<F> Base;
+    typedef __Base_Pkg<F> base;
     typedef R return_type;
-    typedef typename Base::Fn functor_type;
+    typedef typename base::Fn functor_type;
 
-    Calculator() : Base() {}
+    Calculator() : base() {}
 
-    template <NoVoid First, NoVoid... Rest>
-    Calculator(First f, Rest... res) : Base(f, res...) {}
+    template <__NoVoid First, __NoVoid... Rest>
+    Calculator(First f, Rest... res) : base(f, res...) {}
 
     Calculator(const Calculator &) = delete;
     Calculator &operator=(const Calculator &) = delete;
 
-    return_type operator()(Args... args) { return Base::_fn(args...); }
+    return_type operator()(Args... args) { return base::_fn(args...); }
 
-    template <NoVoid... Rest>
+    template <__NoVoid... Rest>
     static Calculator init(Rest... res)
     {
         return Calculator(res...);
     }
 };
 
-template <class F, NoVoid... Args>
-requires PFunctor<F, void, Args...>
+template <class F, __NoVoid... Args>
+requires __P_Functor<F, void, Args...>
 class Calculator<F, Args...> : public __Base_Pkg<F>
 {
 public:
-    typedef __Base_Pkg<F> Base;
-    typedef typename Base::Fn functor_type;
+    typedef __Base_Pkg<F> base;
+    typedef typename base::Fn functor_type;
     using return_type = void;
 
-    Calculator() : Base() {}
+    Calculator() : base() {}
 
-    template <NoVoid First, NoVoid... Rest>
-    Calculator(First f, Rest... res) : Base(f, res...) {}
+    template <__NoVoid First, __NoVoid... Rest>
+    Calculator(First f, Rest... res) : base(f, res...) {}
 
     Calculator(const Calculator &) = delete;
     Calculator &operator=(const Calculator &) = delete;
 
-    return_type operator()(Args... args) { Base::_fn(args...); }
+    return_type operator()(Args... args) { base::_fn(args...); }
 
-    template <NoVoid... Rest>
+    template <__NoVoid... Rest>
     static Calculator init(Rest... res)
     {
         return Calculator(res...);
     }
 };
 
-template <NoVoid R, NoVoid... Args>
+template <__NoVoid R, __NoVoid... Args>
 class Calculator<R(Args...)> : public __Base_Pkg<R(Args...)>
 {
 public:
-    using Base = __Base_Pkg<R(Args...)>;
-    using functor_type = typename Base::Fn;
+    using base = __Base_Pkg<R(Args...)>;
+    using functor_type = typename base::Fn;
     using return_type = R;
 
     Calculator() = delete;
     Calculator(const Calculator &) = delete;
     Calculator &operator=(const Calculator &) = delete;
 
-    Calculator(functor_type fn) : Base(fn) {}
+    Calculator(functor_type fn) : base(fn) {}
 
-    return_type operator()(Args... args) { return Base::_fn(args...); }
+    return_type operator()(Args... args) { return base::_fn(args...); }
 
     static Calculator init(functor_type fn)
     {
@@ -157,21 +157,21 @@ public:
     }
 };
 
-template <NoVoid... Args>
+template <__NoVoid... Args>
 class Calculator<void(Args...)> : __Base_Pkg<void(Args...)>
 {
 public:
-    using Base = __Base_Pkg<void(Args...)>;
-    using functor_type = typename Base::Fn;
+    using base = __Base_Pkg<void(Args...)>;
+    using functor_type = typename base::Fn;
     using return_type = void;
 
     Calculator() = delete;
     Calculator(const Calculator &) = delete;
     Calculator &operator=(const Calculator &) = delete;
 
-    Calculator(functor_type fn) : Base(fn) {}
+    Calculator(functor_type fn) : base(fn) {}
 
-    return_type operator()(Args... args) { Base::_fn(args...); }
+    return_type operator()(Args... args) { base::_fn(args...); }
 
     static Calculator init(functor_type fn)
     {
