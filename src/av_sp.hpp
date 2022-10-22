@@ -1,9 +1,7 @@
-#include <thread>
-#include <shared_mutex>
-#include <iostream>
-#include <vector>
-#include <chrono>
+#ifndef __AV_SP
+#define __AV_SP
 
+#include <shared_mutex>
 
 template <unsigned Limit>
 class Lock;
@@ -28,12 +26,11 @@ public:
         return tmp;
     }
 
-    unsigned incre()
+    void incre()
     {
         sh_mtx.lock();
         sgnl = ++sgnl == Limit ? 0 : sgnl;
         sh_mtx.unlock();
-        return get_sgnl();
     }
 
     bool test(unsigned expct) const
@@ -115,9 +112,9 @@ public:
         }
     }
 
-    unsigned unlock()
+    void unlock()
     {
-        return flag.incre();
+        flag.incre();
     }
 
     operator bool()
@@ -135,76 +132,4 @@ Flag<Limit> Lock<Limit>::num = Flag<Limit>();
 template <unsigned Limit>
 BoolFlag Lock<Limit>::full = BoolFlag();
 
-
-int sum = 0;
-
-template <unsigned Limit>
-void func()
-{
-    Lock<Limit> lck;
-    for(int i = 0; i < 10000; i++)
-    {
-        lck.lock();
-        ++sum;
-        // std::cout << "sum =\t" << ++sum << "\tin thread["
-        //           << std::this_thread::get_id() <<"]" << std::endl;
-        lck.unlock();
-    }
-}
-
-template <unsigned Limit>
-void func2(Lock<Limit>&& lck)
-{
-    for(int i = 0; i < 10000; i++)
-    {
-        lck.lock();
-        ++sum;
-        // std::cout << "sum =\t" << ++sum << "\tin thread["
-        //           << std::this_thread::get_id() <<"]" << std::endl;
-        lck.unlock();
-    }
-}
-
-int main()
-{
-    auto start = std::chrono::high_resolution_clock::now();
-    using Lck = Lock<0x4>;
-    std::vector<std::thread> threads;
-    for(int i = 0; i < 0x4; i++)
-        threads.push_back(std::thread(func2<0x4>, Lck()));
-    
-    for(int i = 0; i < 0x4; i++)
-        threads[i].join();
-
-    auto end = std::chrono::high_resolution_clock::now();
-    double dr_ms=std::chrono::duration<double,std::milli>(end - start).count();
-
-    std::cout << sum << std::endl;
-    std::cout << dr_ms << std::endl;
-    return 0;
-}
-
-// int main()
-// {
-//     using Lck = Lock<3>;
-
-//     Lck lck0;
-//     Lck lck1;
-//     Lck lck2;
-
-//     lck0.lock();
-//     sum++;
-//     lck0.unlock();
-
-//     lck1.lock();
-//     sum++;
-//     lck1.unlock();
-
-//     lck2.lock();
-//     sum++;
-//     lck2.unlock();
-
-//     lck0.lock();
-//     sum++;
-//     lck0.unlock();
-// }
+#endif
